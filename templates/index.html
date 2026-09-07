@@ -18,7 +18,7 @@
     <h2>STEP to GLB Batch Converter</h2>
     
     <div id="drop-zone">Drag & Drop Folder Here or Click to Select Folder
-        <input type="file" id="folder-input" webkitdirectory directory multiple style="display:none;">
+        <input type="file" id="folder-input" name="files" webkitdirectory directory multiple style="display:none;">
     </div>
 
     <div class="form-group">
@@ -28,7 +28,7 @@
 
     <div class="form-group">
         <label for="dest-path"><strong>Destination Folder Path:</strong></label>
-        <input type="text" id="dest-path" placeholder="e.g., C:/Users/Name/Documents/Converted_GLBs">
+        <input type="text" id="dest-path" name="destination_folder" placeholder="e.g., C:/Users/Name/Documents/Converted_GLBs">
     </div>
 
     <button id="convert-btn" disabled>Convert All Files</button>
@@ -106,7 +106,9 @@
             convertBtn.disabled = true;
 
             try {
-                const res = await fetch('/convert', { method: 'POST', body: formData });
+                // Fixed: Appended /convert to the backend Render URL
+                const API_URL = "https://steptoglbconverter.onrender.com/convert";
+                const res = await fetch(API_URL, { method: 'POST', body: formData });
                 const result = await res.json();
                 if (res.ok) {
                     statusText.innerText = `Success! ${result.converted_count} files converted to: ${result.output_dir}`;
@@ -114,7 +116,7 @@
                     statusText.innerText = `Error: ${result.error}`;
                 }
             } catch (err) {
-                statusText.innerText = "Conversion failed due to a server error.";
+                statusText.innerText = "Conversion failed due to a server connection error.";
             } finally {
                 convertBtn.disabled = false;
             }
