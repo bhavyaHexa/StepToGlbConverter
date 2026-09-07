@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>STEP to GLB Converter</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 30px auto; padding: 0 20px; }
+        #drop-zone { border: 2px dashed #007bff; padding: 40px; text-align: center; border-radius: 8px; cursor: pointer; background: #f8f9fa; }
+        #drop-zone.hover { background: #e2e6ea; }
+        .file-list { margin-top: 15px; max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 4px; }
+        .form-group { margin-top: 20px; }
+        input[type="text"] { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { background: #28a745; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 4px; cursor: pointer; margin-top: 15px; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <h2>STEP to GLB Batch Converter</h2>
+    
+    <div id="drop-zone">Drag & Drop Folder Here or Click to Select Folder
+        <input type="file" id="folder-input" webkitdirectory directory multiple style="display:none;">
+    </div>
+
+    <div class="form-group">
+        <strong>Detected STEP Files:</strong>
+        <div id="file-list" class="file-list">No files selected</div>
+    </div>
+
+    <div class="form-group">
+        <label for="dest-path"><strong>Destination Folder Path:</strong></label>
+        <input type="text" id="dest-path" placeholder="e.g., C:/Users/Name/Documents/Converted_GLBs">
+    </div>
+
+    <button id="convert-btn" disabled>Convert All Files</button>
+    <p id="status-text"></p>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const folderInput = document.getElementById('folder-input');
+        const fileListDiv = document.getElementById('file-list');
+        const convertBtn = document.getElementById('convert-btn');
+        const destPathInput = document.getElementById('dest-path');
+        const statusText = document.getElementById('status-text');
+
+        let stepFiles = [];
+
+        dropZone.addEventListener('click', () => folderInput.click());
+        folderInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('hover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('hover'));
+        dropZone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('hover');
+            const items = e.dataTransfer.items;
+            stepFiles = [];
+            for (let item of items) {
+                const entry = item.webkitGetAsEntry();
+                if (entry) await scanFiles(entry);
+            }
+            updateFileListUI();
+        });
+
+        async function scanFiles(entry) {
+            const nameLower = entry.name.toLowerCase();
+            if (entry.isFile && (nameLower.endsWith('.step') || nameLower.endsWith('.stp'))) {
+                const file = await new Promise((resolve) => entry.file(resolve));
+                stepFiles.push(file);
+            } else if (entry.isDirectory) {
+                const dirReader = entry.createReader();
+                const entries = await new Promise((resolve) => dirReader.readEntries(resolve));
+                for (let childEntry of entries) await scanFiles(childEntry);
+            }
+        }
+
+        function handleFiles(files) {
+            stepFiles = Array.from(files).filter(f => {
+                const nameLower = f.name.toLowerCase();
+                return nameLower.endsWith('.step') || nameLower.endsWith('.stp');
+            });
+            updateFileListUI();
+        }
+
+        function updateFileListUI() {
+            if (stepFiles.length === 0) {
+                fileListDiv.innerHTML = "No valid .step / .stp files found.";
+                convertBtn.disabled = true;
+                return;
+            }
+            fileListDiv.innerHTML = stepFiles.map(f => `<div>📄 ${f.name}</div>`).join('');
+            convertBtn.disabled = false;
+        }
+
+        convertBtn.addEventListener('click', async () => {
+            const destPath = destPathInput.value.trim();
+            if (!destPath) {
+                alert("Please enter a destination folder path.");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('destination_folder', destPath);
+            stepFiles.forEach(file => formData.append('files', file));
+
+            statusText.innerText = "Converting... Please wait.";
+            convertBtn.disabled = true;
+
+            try {
+                const res = await fetch('/convert', { method: 'POST', body: formData });
+                const result = await res.json();
+                if (res.ok) {
+                    statusText.innerText = `Success! ${result.converted_count} files converted to: ${result.output_dir}`;
+                } else {
+                    statusText.innerText = `Error: ${result.error}`;
+                }
+            } catch (err) {
+                statusText.innerText = "Conversion failed due to a server error.";
+            } finally {
+                convertBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
