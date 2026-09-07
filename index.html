@@ -17,7 +17,7 @@
 <body>
     <h2>STEP to GLB Batch Converter</h2>
     
-    <div id="drop-zone">Drag & Drop Folder Here or Click to Select Folder
+    <div id="drop-zone"><span id="drop-zone-text">Drag & Drop Folder Here or Click to Select Folder</span>
         <input type="file" id="folder-input" name="files" webkitdirectory directory multiple style="display:none;">
     </div>
 
@@ -109,16 +109,19 @@
 
         function updateFileListUI() {
             const fileCounterSpan = document.getElementById('file-counter');
+            const dropZoneText = document.getElementById('drop-zone-text');
             if (stepFiles.length === 0) {
                 fileListDiv.innerHTML = "No valid .step / .stp files found.";
                 convertBtn.disabled = true;
                 fileCounterSpan.style.display = "none";
+                dropZoneText.innerText = "Drag & Drop Folder Here or Click to Select Folder";
                 return;
             }
             fileListDiv.innerHTML = stepFiles.map(f => `<div>📄 ${f.customRelativePath || f.name}</div>`).join('');
             convertBtn.disabled = false;
             fileCounterSpan.innerText = `${stepFiles.length} file(s) selected`;
             fileCounterSpan.style.display = "inline";
+            dropZoneText.innerText = `Selected Folder: ${uploadFolderName}`;
         }
 
         convertBtn.addEventListener('click', async () => {
