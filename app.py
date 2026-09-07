@@ -3,8 +3,8 @@ import traceback
 from pathlib import Path
 from fastapi import FastAPI, UploadFile, File, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+# from fastapi.templating import Jinja2Templates (Removed since we serve static file)
 
 # Import existing conversion scripts directly without altering them
 import step_to_glb
@@ -21,15 +21,13 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-templates = Jinja2Templates(directory="templates")
-
 BASE_DIR = Path(__file__).parent
 STAGING_STEP_DIR = BASE_DIR / "STEP" / "PL" / "Female Wiggins"
 STAGING_GLB_DIR = BASE_DIR / "GLB" / "PL" / "Female Wiggins"
 
-@app.get("/", response_class=HTMLResponse)
-async def serve_ui(request: Request):
-    return templates.TemplateResponse(request=request, name="index.html")
+@app.get("/", response_class=FileResponse)
+async def serve_ui():
+    return FileResponse(BASE_DIR / "index.html")
 
 @app.post("/convert")
 async def convert_files(
