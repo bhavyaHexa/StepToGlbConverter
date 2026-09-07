@@ -31,17 +31,15 @@ async def serve_ui():
 
 @app.post("/convert")
 async def convert_files(
-    destination_folder: str = Form(...),
     files: list[UploadFile] = File(...)
 ):
-    dest_path = Path(destination_folder)
     
     try:
         # 1. Prepare Staging Directories
         shutil.rmtree(STAGING_STEP_DIR, ignore_errors=True)
         shutil.rmtree(STAGING_GLB_DIR, ignore_errors=True)
         STAGING_STEP_DIR.mkdir(parents=True, exist_ok=True)
-        dest_path.mkdir(parents=True, exist_ok=True)
+        STAGING_GLB_DIR.mkdir(parents=True, exist_ok=True)
 
         # 2. Save uploaded STEP files into the staging path
         for file in files:
@@ -55,16 +53,19 @@ async def convert_files(
         step_to_glb.batch_convert()
         combine_glb_meshes.run_combine()
 
-        # 4. Move generated GLB files to target destination
+        # 4. Zip generated GLB files
         converted_files = list(STAGING_GLB_DIR.glob("*.glb"))
-        for glb in converted_files:
-            shutil.move(str(glb), str(dest_path / glb.name))
+        if not converted_files:
+            return JSONResponse(status_code=400, content={"error": "No files were successfully converted."})
+        
+        zip_path = BASE_DIR / "converted_glbs.zip"
+        shutil.make_archive(str(zip_path.with_suffix('')), 'zip', str(STAGING_GLB_DIR))
 
-        return {
-            "status": "success", 
-            "converted_count": len(converted_files), 
-            "output_dir": str(dest_path)
-        }
+        return FileResponse(
+            path=zip_path,
+            media_type="application/zip",
+            filename="converted_glbs.zip"
+        )
 
     except Exception as e:
         error_details = traceback.format_exc()

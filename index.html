@@ -26,10 +26,7 @@
         <div id="file-list" class="file-list">No files selected</div>
     </div>
 
-    <div class="form-group">
-        <label for="dest-path"><strong>Destination Folder Path:</strong></label>
-        <input type="text" id="dest-path" name="destination_folder" placeholder="e.g., C:/Users/Name/Documents/Converted_GLBs">
-    </div>
+
 
     <button id="convert-btn" disabled>Convert All Files</button>
     <p id="status-text"></p>
@@ -39,7 +36,6 @@
         const folderInput = document.getElementById('folder-input');
         const fileListDiv = document.getElementById('file-list');
         const convertBtn = document.getElementById('convert-btn');
-        const destPathInput = document.getElementById('dest-path');
         const statusText = document.getElementById('status-text');
 
         let stepFiles = [];
@@ -92,27 +88,30 @@
         }
 
         convertBtn.addEventListener('click', async () => {
-            const destPath = destPathInput.value.trim();
-            if (!destPath) {
-                alert("Please enter a destination folder path.");
-                return;
-            }
-
             const formData = new FormData();
-            formData.append('destination_folder', destPath);
             stepFiles.forEach(file => formData.append('files', file));
 
-            statusText.innerText = "Converting... Please wait.";
+            statusText.innerText = "Converting... Please wait. This may take a while for large files.";
             convertBtn.disabled = true;
 
             try {
                 // Fixed: Appended /convert to the backend Render URL
                 const API_URL = "https://steptoglbconverter.onrender.com/convert";
                 const res = await fetch(API_URL, { method: 'POST', body: formData });
-                const result = await res.json();
+                
                 if (res.ok) {
-                    statusText.innerText = `Success! ${result.converted_count} files converted to: ${result.output_dir}`;
+                    const blob = await res.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = "converted_glbs.zip";
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                    statusText.innerText = "Success! Your converted files have been downloaded as a ZIP archive.";
                 } else {
+                    const result = await res.json();
                     statusText.innerText = `Error: ${result.error}`;
                 }
             } catch (err) {
