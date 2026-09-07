@@ -23,7 +23,7 @@ import pygltflib
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
-GLB_DIR  = BASE_DIR / "GLB\PL\Female Wiggins"
+GLB_DIR  = BASE_DIR / "GLB" / "PL" / "Female Wiggins"
 
 
 def clean_name(name: str) -> str:
