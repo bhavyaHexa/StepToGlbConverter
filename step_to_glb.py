@@ -106,11 +106,13 @@ def batch_convert():
         print(f"No .step / .stp files found in {STEP_DIR}")
         return
 
-    print(f"Found {len(step_files)} STEP file(s) in {STEP_DIR}\n")
+    total_files = len(step_files)
+    print(f"Total number of detected STEP files: {total_files}")
+    print(f"Found {total_files} STEP file(s) in {STEP_DIR}\n")
 
-    for step_file in step_files:
+    for i, step_file in enumerate(step_files, start=1):
         glb_file = GLB_DIR / (step_file.stem + ".glb")
-        print(f"Converting: {step_file.name} -> {glb_file.name}")
+        print(f"Converting ({i}/{total_files}): {step_file.name} -> {glb_file.name}")
         success = step_to_glb(str(step_file), str(glb_file))
         status = "OK" if success else "FAILED"
         print(f"  [{status}]\n")

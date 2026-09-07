@@ -23,7 +23,7 @@ import pygltflib
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
-GLB_DIR  = BASE_DIR / "GLB" / "PL" / "Female Wiggins"
+DEFAULT_GLB_DIR  = BASE_DIR / "GLB" / "PL" / "Female Wiggins"
 
 
 def clean_name(name: str) -> str:
@@ -262,13 +262,14 @@ def combine_glb_file(glb_path: Path, keep_parts: bool = False) -> bool:
     return True
 
 
-def run_combine(keep_parts: bool = False):
-    glb_files = sorted(GLB_DIR.glob("*.glb"))
+def run_combine(keep_parts: bool = False, input_dir: Path = None):
+    glb_dir = input_dir if input_dir else DEFAULT_GLB_DIR
+    glb_files = sorted(glb_dir.glob("*.glb"))
     if not glb_files:
-        print(f"No .glb files found in {GLB_DIR}")
+        print(f"No .glb files found in {glb_dir}")
         return
 
-    print(f"Found {len(glb_files)} GLB file(s) in {GLB_DIR}\n")
+    print(f"Found {len(glb_files)} GLB file(s) in {glb_dir}\n")
     for glb_path in glb_files:
         print(f"Combining meshes for: {glb_path.name}")
         combine_glb_file(glb_path, keep_parts=keep_parts)
@@ -280,5 +281,8 @@ def run_combine(keep_parts: bool = False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Combine sub-meshes/primitives of GLB components.")
     parser.add_argument("--keep-parts", action="store_true", help="Keep Part* construction nodes.")
+    parser.add_argument("--input-dir", type=str, help="Path to a custom directory containing GLB files.")
     args = parser.parse_args()
-    run_combine(keep_parts=args.keep_parts)
+    
+    input_path = Path(args.input_dir) if args.input_dir else None
+    run_combine(keep_parts=args.keep_parts, input_dir=input_path)
