@@ -55,7 +55,7 @@ async def convert_files(
         combine_glb_meshes.run_combine()
 
         # 4. Zip generated GLB files
-        converted_files = list(STAGING_GLB_DIR.glob("*.glb"))
+        converted_files = list(STAGING_GLB_DIR.rglob("*.glb"))
         if not converted_files:
             return JSONResponse(status_code=400, content={"error": "No files were successfully converted."})
         

@@ -132,8 +132,8 @@
             convertBtn.disabled = true;
 
             try {
-                // Fixed: Appended /convert to the backend Render URL
-                const API_URL = "https://steptoglbconverter.onrender.com/convert";
+                // Updated to point to the local backend during development
+                const API_URL = "http://127.0.0.1:8000/convert";
                 const res = await fetch(API_URL, { method: 'POST', body: formData });
                 
                 if (res.ok) {
