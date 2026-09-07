@@ -22,7 +22,10 @@
     </div>
 
     <div class="form-group">
-        <strong>Detected STEP Files:</strong>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <strong>Detected STEP Files:</strong>
+            <span id="file-counter" style="font-weight: bold; color: #007bff; display: none;"></span>
+        </div>
         <div id="file-list" class="file-list">No files selected</div>
     </div>
 
@@ -91,13 +94,17 @@
         }
 
         function updateFileListUI() {
+            const fileCounterSpan = document.getElementById('file-counter');
             if (stepFiles.length === 0) {
                 fileListDiv.innerHTML = "No valid .step / .stp files found.";
                 convertBtn.disabled = true;
+                fileCounterSpan.style.display = "none";
                 return;
             }
             fileListDiv.innerHTML = stepFiles.map(f => `<div>📄 ${f.name}</div>`).join('');
             convertBtn.disabled = false;
+            fileCounterSpan.innerText = `${stepFiles.length} file(s) selected`;
+            fileCounterSpan.style.display = "inline";
         }
 
         convertBtn.addEventListener('click', async () => {
