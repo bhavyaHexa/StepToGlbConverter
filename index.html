@@ -71,10 +71,20 @@
             const nameLower = entry.name.toLowerCase();
             if (entry.isFile && (nameLower.endsWith('.step') || nameLower.endsWith('.stp'))) {
                 const file = await new Promise((resolve) => entry.file(resolve));
+                // Remove the leading slash from fullPath if present
+                file.customRelativePath = entry.fullPath.startsWith('/') ? entry.fullPath.substring(1) : entry.fullPath;
                 stepFiles.push(file);
             } else if (entry.isDirectory) {
                 const dirReader = entry.createReader();
-                const entries = await new Promise((resolve) => dirReader.readEntries(resolve));
+                let entries = [];
+                let readBatch = async () => {
+                    const batch = await new Promise((resolve) => dirReader.readEntries(resolve));
+                    if (batch.length > 0) {
+                        entries.push(...batch);
+                        await readBatch();
+                    }
+                };
+                await readBatch();
                 for (let childEntry of entries) await scanFiles(childEntry);
             }
         }
@@ -88,7 +98,11 @@
             }
             stepFiles = Array.from(files).filter(f => {
                 const nameLower = f.name.toLowerCase();
-                return nameLower.endsWith('.step') || nameLower.endsWith('.stp');
+                if (nameLower.endsWith('.step') || nameLower.endsWith('.stp')) {
+                    f.customRelativePath = f.webkitRelativePath || f.name;
+                    return true;
+                }
+                return false;
             });
             updateFileListUI();
         }
@@ -101,7 +115,7 @@
                 fileCounterSpan.style.display = "none";
                 return;
             }
-            fileListDiv.innerHTML = stepFiles.map(f => `<div>📄 ${f.name}</div>`).join('');
+            fileListDiv.innerHTML = stepFiles.map(f => `<div>📄 ${f.customRelativePath || f.name}</div>`).join('');
             convertBtn.disabled = false;
             fileCounterSpan.innerText = `${stepFiles.length} file(s) selected`;
             fileCounterSpan.style.display = "inline";
@@ -109,7 +123,7 @@
 
         convertBtn.addEventListener('click', async () => {
             const formData = new FormData();
-            stepFiles.forEach(file => formData.append('files', file));
+            stepFiles.forEach(file => formData.append('files', file, file.customRelativePath || file.name));
 
             statusText.innerText = "Converting... Please wait. This may take a while for large files.";
             convertBtn.disabled = true;

@@ -264,7 +264,7 @@ def combine_glb_file(glb_path: Path, keep_parts: bool = False) -> bool:
 
 def run_combine(keep_parts: bool = False, input_dir: Path = None):
     glb_dir = input_dir if input_dir else DEFAULT_GLB_DIR
-    glb_files = sorted(glb_dir.glob("*.glb"))
+    glb_files = sorted(glb_dir.rglob("*.glb"))
     if not glb_files:
         print(f"No .glb files found in {glb_dir}")
         return

@@ -90,7 +90,7 @@ def batch_convert():
 
     step_files = []
     for ext in ("*.step", "*.stp", "*.STEP", "*.STP"):
-        step_files.extend(STEP_DIR.glob(ext))
+        step_files.extend(STEP_DIR.rglob(ext))
     
     # Deduplicate while preserving order
     seen = set()
@@ -111,8 +111,10 @@ def batch_convert():
     print(f"Found {total_files} STEP file(s) in {STEP_DIR}\n")
 
     for i, step_file in enumerate(step_files, start=1):
-        glb_file = GLB_DIR / (step_file.stem + ".glb")
-        print(f"Converting ({i}/{total_files}): {step_file.name} -> {glb_file.name}")
+        rel_path = step_file.relative_to(STEP_DIR)
+        glb_file = GLB_DIR / rel_path.with_suffix(".glb")
+        glb_file.parent.mkdir(parents=True, exist_ok=True)
+        print(f"Converting ({i}/{total_files}): {rel_path} -> {glb_file.name}")
         success = step_to_glb(str(step_file), str(glb_file))
         status = "OK" if success else "FAILED"
         print(f"  [{status}]\n")
