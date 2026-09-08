@@ -30,7 +30,7 @@ async def serve_ui():
     return FileResponse(BASE_DIR / "index.html")
 
 @app.post("/convert")
-async def convert_files(
+def convert_files(
     files: list[UploadFile] = File(...)
 ):
     
@@ -46,9 +46,12 @@ async def convert_files(
             file_name_lower = file.filename.lower()
             if file_name_lower.endswith('.step') or file_name_lower.endswith('.stp'):
                 file_path = STAGING_STEP_DIR / file.filename
+                # Ensure the path doesn't escape the staging directory
+                if not str(file_path.resolve()).startswith(str(STAGING_STEP_DIR.resolve())):
+                    continue
                 file_path.parent.mkdir(parents=True, exist_ok=True)
                 with open(file_path, "wb") as f:
-                    f.write(await file.read())
+                    f.write(file.file.read())
 
         # 3. Execute conversion functions directly in memory
         step_to_glb.batch_convert()

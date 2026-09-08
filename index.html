@@ -132,10 +132,13 @@
             convertBtn.disabled = true;
 
             try {
-                // Updated to use a relative path so it works from any PC on the network
-                const API_URL = "/convert";
+
+                const BACKEND_BASE_URL = "https://steptoglbconverter.onrender.com";
+
+                const API_URL = `${BACKEND_BASE_URL}/convert`;
+
                 const res = await fetch(API_URL, { method: 'POST', body: formData });
-                
+
                 if (res.ok) {
                     const blob = await res.blob();
                     const url = window.URL.createObjectURL(blob);
